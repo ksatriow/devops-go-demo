@@ -34,11 +34,19 @@ git add .
 
 ```
 
+#### Pembuatan branch baru
+
+```
+git checkout -b development
+
+```
+
 #### Penggabungan Git 
 
 ```
-git status
-git add .
+git checkout main or git switch main
+git merge development
+git push
 
 ```
 
