@@ -14,7 +14,7 @@ RUN go get -d -v ./...
 RUN go build -o api .
 
 #EXPOSE the port
-EXPOSE 4000
+EXPOSE 8002
 
 # Run the executable
 CMD ["./api"]
