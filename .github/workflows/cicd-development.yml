@@ -17,13 +17,13 @@ jobs:
         env:
           APP_CONFIG_FILE: ${{ secrets.APP_CONFIG_FILE }}
         run: |
-          if [ -d /home/runner/work/restapi-go/restapi-go/ ]; then
+          if [ -d /home/runner/work/devops-go-demo/devops-go-demo/ ]; then
             echo "Directory already exists, skipping creation."
           else
-            mkdir /home/runner/work/restapi-go/restapi-go/
+            mkdir -p /home/runner/work/devops-go-demo/devops-go-demo/
             echo "Directory created."
           fi
-          echo $APP_CONFIG_FILE | base64 --decode >> /home/runner/work/restapi-go/restapi-go/.env
+          echo $APP_CONFIG_FILE | base64 --decode >> /home/runner/work/devops-go-demo/devops-go-demo/.env
           echo "${APP_CONFIG_FILE}"
           ls -l
 
