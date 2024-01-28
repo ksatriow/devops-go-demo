@@ -1,0 +1,42 @@
+name: Merge and Schedule Action
+
+on:
+  push:
+    branches:
+      - preprod
+  schedule:
+    - cron: "0 15 * * 2,4" # 10 PM (22:00) UTC+7 on Tuesdays (2) and Thursdays (4)
+      timezone: "Asia/Jakarta"
+
+jobs:
+  merge_and_schedule:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Add your merge step here if necessary
+    # Example:
+    # - name: Merge main into the feature branch
+    #   run: git merge main
+
+    - name: Run your action after merge
+      run: |
+        echo "Action is running after merge!"
+        # Add your action commands here
+
+  scheduled_job:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/preprod' # Only run the scheduled job if the branch is 'preprod'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Run your scheduled action
+      run: |
+        echo "Scheduled action is running!"
+        # Add your scheduled action commands here
+
+    # Schedule the job to run at 10 PM on Tuesdays and Thursdays in Asia/Jakarta timezone
+    # Note: All times are in UTC, so 3 PM UTC is 10 PM Western Indonesia Time (WIB) during daylight saving time.
+    # The timezone setting only affects the visualization on GitHub, not the actual execution time.
