@@ -104,10 +104,10 @@ jobs:
               backend:
                 image: ${{ secrets.DOCKER_DEV_REPOSITORY }}:${{ github.ref_name }}-${{ steps.sha_tag.outputs.tag }}
                 ports:
-                  - "8002-8003:8002"
+                  - "8002:8002"
                 deploy:
                   mode: replicated
-                  replicas: 2
+                  replicas: 1
                   restart_policy:
                     condition: on-failure
                     delay: 5s

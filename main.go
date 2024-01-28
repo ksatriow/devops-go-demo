@@ -41,7 +41,7 @@ func main() {
 	router.HandleFunc("/users/{id}", deleteUser(db)).Methods("DELETE")
 
 	//start server
-	log.Fatal(http.ListenAndServe(":8000", jsonContentTypeMiddleware(router)))
+	log.Fatal(http.ListenAndServe(":4000", jsonContentTypeMiddleware(router)))
 }
 
 func jsonContentTypeMiddleware(next http.Handler) http.Handler {
