@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
+	// "os"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -19,7 +19,7 @@ type User struct {
 
 func main() {
 	//connect to database
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432?sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
