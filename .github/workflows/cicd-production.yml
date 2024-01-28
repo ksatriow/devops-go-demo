@@ -73,12 +73,13 @@ jobs:
             echo "::set-output name=tag_exists::false"
           fi
 
-      - name: Release
-        uses: goreleaser/goreleaser-action@master
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
         with:
-          version: latest
-          args: release --rm-dist
-          workdir: . # <-- path to directory with main() func
+            # either 'goreleaser' (default) or 'goreleaser-pro'
+            distribution: goreleaser
+            version: latest
+            args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
 
