@@ -3,12 +3,11 @@ version: '3.7'
 services:
   go-app:
     container_name: go-app
-    image: francescoxx/go-app:1.0.1
     build: .
-    environment:
-      DATABASE_URL: "host=go_db user=postgres password=postgres dbname=postgres sslmode=disable"
+    # environment:
+    #   DATABASE_URL: "host=go_db user=postgres password=postgres dbname=postgres sslmode=disable"
     ports:
-      - "8002:8002"
+      - "8000:8000"
     depends_on:
       - go_db
   go_db:

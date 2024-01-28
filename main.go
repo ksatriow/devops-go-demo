@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
+	// "os"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -19,7 +19,7 @@ type User struct {
 
 func main() {
 	//connect to database
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432?sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func main() {
 	router.HandleFunc("/users/{id}", deleteUser(db)).Methods("DELETE")
 
 	//start server
-	log.Fatal(http.ListenAndServe(":8000", jsonContentTypeMiddleware(router)))
+	log.Fatal(http.ListenAndServe(":4000", jsonContentTypeMiddleware(router)))
 }
 
 func jsonContentTypeMiddleware(next http.Handler) http.Handler {

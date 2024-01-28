@@ -1,0 +1,119 @@
+name: CICD DEVELOPMENT PIPELINE
+
+on:
+  push:
+    branches:
+      - "development"
+
+jobs:
+
+  buildpush:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+    
+      - name: Set environment variables
+        env:
+          APP_CONFIG_FILE: ${{ secrets.APP_CONFIG_FILE }}
+        run: |
+          if [ -d /home/runner/work/devops-go-demo/devops-go-demo/ ]; then
+            echo "Directory already exists, skipping creation."
+          else
+            mkdir -p /home/runner/work/devops-go-demo/devops-go-demo/
+            echo "Directory created."
+          fi
+          echo $APP_CONFIG_FILE | base64 --decode >> /home/runner/work/devops-go-demo/devops-go-demo/.env
+          echo "${APP_CONFIG_FILE}"
+          ls -l
+
+      - name: Create SHA Container Tag
+        id: sha_tag
+        run: |
+          tag=$(cut -c 1-7 <<< $GITHUB_SHA)
+          echo "::set-output name=tag::$tag"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+          
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_DEV_REPOSITORY }}:latest
+            ${{ secrets.DOCKER_DEV_REPOSITORY }}:${{ github.ref_name }}-${{ steps.sha_tag.outputs.tag }}
+          build-args: |
+            git_sha=${{ github.sha }}
+
+      - name: Check if Tag Exists
+        id: check_tag
+        run: |
+          tag_name="${{ github.ref_name }}-${{ steps.sha_tag.outputs.tag }}"
+          existing_tag=$(git tag --list $tag_name)
+          if [ -n "$existing_tag" ]; then
+            echo "::set-output name=tag_exists::true"
+          else
+            echo "::set-output name=tag_exists::false"
+          fi
+
+      - name: Create Release
+        if: github.ref == 'refs/heads/preprod' && steps.check_tag.outputs.tag_exists != 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}-${{ steps.sha_tag.outputs.tag }}
+          release_name: ${{ github.ref_name }}-${{ steps.sha_tag.outputs.tag }}
+          prerelease: true
+
+      - name: remote ssh commands using key
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST_DEV }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_CRED_DEV }}
+          port: ${{ secrets.PORT }}
+          script: |
+            whoami
+            ls -al
+            docker pull ${{ secrets.DOCKER_DEV_REPOSITORY }}:${{ github.ref_name }}-${{ steps.sha_tag.outputs.tag }}
+            ls -l
+            cd pipelinev2
+            ls -l
+            if [ -d "${{ github.event.repository.name }}" ]; then
+              echo "Directory already exists, skipping creation."
+            else
+              mkdir "${{ github.event.repository.name }}"
+              echo "Directory created."
+            fi
+            cat <<EOF > docker-compose.yml
+            services:
+              backend:
+                image: ${{ secrets.DOCKER_DEV_REPOSITORY }}:${{ github.ref_name }}-${{ steps.sha_tag.outputs.tag }}
+                ports:
+                  - "8002:8002"
+                deploy:
+                  mode: replicated
+                  replicas: 1
+                  restart_policy:
+                    condition: on-failure
+                    delay: 5s
+                    max_attempts: 3
+                    window: 120s
+            EOF
+            docker compose rm -f
+            docker compose pull
+            docker compose up --build -d
