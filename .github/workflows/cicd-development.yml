@@ -84,7 +84,7 @@ jobs:
         with:
           host: ${{ secrets.HOST_DEV }}
           username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.SSH_PASS_PROD }}
+          key: ${{ secrets.SSH_CRED_DEV }}
           port: ${{ secrets.PORT }}
           script: |
             whoami
@@ -98,10 +98,6 @@ jobs:
             else
               mkdir "${{ github.event.repository.name }}"
               echo "Directory created."
-            fi
-            cd ${{ github.event.repository.name }}
-            if [ ! -d "${{ secrets.PATH_LOG_restapi-go }}" ]; then
-              mkdir -p ${{ secrets.PATH_LOG_restapi-go }}
             fi
             cat <<EOF > docker-compose.yml
             services:
