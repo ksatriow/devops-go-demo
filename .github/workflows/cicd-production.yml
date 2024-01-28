@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "main"
+    tags:
+      - '*'  
 
 jobs:
 
@@ -11,7 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
     
       - name: Set environment variables
         env:
@@ -69,51 +73,50 @@ jobs:
             echo "::set-output name=tag_exists::false"
           fi
 
-      - name: Create Release
-        if: github.ref == 'refs/heads/preprod' && steps.check_tag.outputs.tag_exists != 'true'
-        uses: actions/create-release@v1
+      - name: Release
+        uses: goreleaser/goreleaser-action@master
+        with:
+          version: latest
+          args: release --rm-dist
+          workdir: . # <-- path to directory with main() func
         env:
-          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}-${{ steps.sha_tag.outputs.tag }}
-          release_name: ${{ github.ref_name }}-${{ steps.sha_tag.outputs.tag }}
-          prerelease: true
+          GITHUB_TOKEN: ${{ secrets.GO_RELEASER_GITHUB_TOKEN }}
 
-      - name: remote ssh commands using key
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST_PROD }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_CRED_DEV }}
-          port: ${{ secrets.PORT }}
-          script: |
-            whoami
-            ls -al
-            docker pull ${{ secrets.DOCKER_PROD_REPOSITORY }}:${{ github.ref_name }}-${{ steps.sha_tag.outputs.tag }}
-            ls -l
-            cd pipelinev2
-            ls -l
-            if [ -d "${{ github.event.repository.name }}" ]; then
-              echo "Directory already exists, skipping creation."
-            else
-              mkdir "${{ github.event.repository.name }}"
-              echo "Directory created."
-            fi
-            cat <<EOF > docker-compose.yml
-            services:
-              backend:
-                image: ${{ secrets.DOCKER_PROD_REPOSITORY }}:${{ github.ref_name }}-${{ steps.sha_tag.outputs.tag }}
-                ports:
-                  - "8003:8002"
-                deploy:
-                  mode: replicated
-                  replicas: 1
-                  restart_policy:
-                    condition: on-failure
-                    delay: 5s
-                    max_attempts: 3
-                    window: 120s
-            EOF
-            docker compose rm -f
-            docker compose pull
-            docker compose up --build -d
+      # - name: remote ssh commands using key
+      #   uses: appleboy/ssh-action@master
+      #   with:
+      #     host: ${{ secrets.HOST_PROD }}
+      #     username: ${{ secrets.USERNAME }}
+      #     key: ${{ secrets.SSH_CRED_DEV }}
+      #     port: ${{ secrets.PORT }}
+      #     script: |
+      #       whoami
+      #       ls -al
+      #       docker pull ${{ secrets.DOCKER_PROD_REPOSITORY }}:${{ github.ref_name }}-${{ steps.sha_tag.outputs.tag }}
+      #       ls -l
+      #       cd pipelinev2
+      #       ls -l
+      #       if [ -d "${{ github.event.repository.name }}" ]; then
+      #         echo "Directory already exists, skipping creation."
+      #       else
+      #         mkdir "${{ github.event.repository.name }}"
+      #         echo "Directory created."
+      #       fi
+      #       cat <<EOF > docker-compose.yml
+      #       services:
+      #         backend:
+      #           image: ${{ secrets.DOCKER_PROD_REPOSITORY }}:${{ github.ref_name }}-${{ steps.sha_tag.outputs.tag }}
+      #           ports:
+      #             - "8003:8002"
+      #           deploy:
+      #             mode: replicated
+      #             replicas: 1
+      #             restart_policy:
+      #               condition: on-failure
+      #               delay: 5s
+      #               max_attempts: 3
+      #               window: 120s
+      #       EOF
+      #       docker compose rm -f
+      #       docker compose pull
+      #       docker compose up --build -d
