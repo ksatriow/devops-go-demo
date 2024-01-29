@@ -50,9 +50,30 @@ git push
 
 ```
 
-### Build Push and Run Docker
-- Dockerfile
-- Docker Compose
+## Cara Run Project
+
+## Menggunakan Docker Compose:
+
+```bash
+docker compose build
+```
+
+This will build the Docker containers for the GoCRUD Rest API application and Postgres database and run them locally.
+
+## Ketika containers are up and running, access API dari URL:
+
+```bash
+http://localhost:8000
+```
+
+## API Endpoints
+### Berikut list endpoints:
+
+- GET /users: Retrieves all users
+- GET /users/{id}: Retrieves a single user by id
+- POST /users: Creates a new user
+- PUT /users/{id}: Updates a user by id
+- DELETE /users/{id}: Deletes a user by id
 
 ### Lint Checker
 - Lint
