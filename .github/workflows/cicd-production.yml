@@ -11,6 +11,8 @@ jobs:
 
   buildpush:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -73,15 +75,20 @@ jobs:
             echo "::set-output name=tag_exists::false"
           fi
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+      - name: Release
+        id: release
+        uses: rymndhng/release-on-push-action@master
         with:
-            # either 'goreleaser' (default) or 'goreleaser-pro'
-            distribution: goreleaser
-            version: latest
-            args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+          bump_version_scheme: minor
+          tag_prefix: v
+          
+      - name: Check Output Parameters
+        run: |
+          echo "Got tag name ${{ steps.release.outputs.tag_name }}"
+          echo "Got release version ${{ steps.release.outputs.version }}"
+          echo "Upload release artifacts to ${{ steps.release.outputs.upload_url }}"
+
+
 
       # - name: remote ssh commands using key
       #   uses: appleboy/ssh-action@master
